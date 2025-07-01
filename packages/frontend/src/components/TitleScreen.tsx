@@ -12,7 +12,11 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onEdit }) => {
   return (
     <div className="relative flex flex-col items-center justify-center h-screen bg-gradient-to-r from-blue-500 to-purple-600">
       <h1 className="text-5xl font-bold mb-6 text-white">nono</h1>
-      <button type="button" className="bg-white text-blue-500 font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-200 transition duration-300" onClick={onStart}>
+      <button
+        type="button"
+        className="bg-white text-blue-500 font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-200 transition duration-300"
+        onClick={onStart}
+      >
         スタート
       </button>
 
@@ -30,7 +34,9 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onEdit }) => {
       </SignedIn>
 
       <SignedOut>
-        <p className="text-white mt-4">パズルを作成するにはログインしてください</p>
+        <p className="text-white mt-4">
+          パズルを作成するにはログインしてください
+        </p>
         <div className="mt-2">
           <SignInButton mode="modal">
             <button

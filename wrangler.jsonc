@@ -4,9 +4,9 @@
   "main": "packages/backend/src/index.ts",
   "compatibility_date": "2025-06-18",
   "assets": {
-        "directory": "packages/frontend/dist",
-        "binding": "ASSETS"
-    },
+    "directory": "packages/frontend/dist",
+    "binding": "ASSETS"
+  },
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

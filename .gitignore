@@ -15,6 +15,7 @@ dist
 dist-ssr
 .wrangler
 /packages/frontend/dist
+packages/backend/.wrangler/
 
 # Environment variables
 .env
