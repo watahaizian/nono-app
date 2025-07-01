@@ -1,10 +1,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "backend",
-  "main": "src/index.ts",
+  "name": "nono-api",
+  "main": "packages/backend/src/index.ts",
   "compatibility_date": "2025-06-18",
   "assets": {
-        "directory": "../frontend/dist",
+        "directory": "packages/frontend/dist",
         "binding": "ASSETS"
     },
   // "compatibility_flags": [

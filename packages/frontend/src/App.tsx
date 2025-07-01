@@ -3,7 +3,7 @@ import { useState } from "react";
 import EditScreen from "./components/EditScreen";
 import GameScreen from "./components/GameScreen";
 import TitleScreen from "./components/TitleScreen";
-import { fetchPuzzles } from "./lib/api";
+import { startNewGame } from "./lib/api";
 
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState("title");
@@ -12,11 +12,9 @@ const App: React.FC = () => {
 
   const startGame = async () => {
     try {
-      const puzzles = await fetchPuzzles();
-      console.log(puzzles);
-      const randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
-      setPuzzleId(randomPuzzle.puzzle_id);
-      setPuzzleSize(randomPuzzle.puzzle_size);
+      const newGame = await startNewGame();
+      setPuzzleId(newGame.puzzle_id);
+      setPuzzleSize(newGame.puzzle_size);
       setCurrentScreen("game");
     } catch (error) {
       console.error(error);

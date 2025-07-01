@@ -36,3 +36,17 @@ export const fetchCells = async (puzzleId: number): Promise<cellData[]> => {
 	// console.log(data);
 	return data;
 };
+
+export const startNewGame = async () => {
+	const response = await fetch(
+		`${import.meta.env.VITE_BACKEND_URL}/puzzles/new-game`,
+		{
+			method: "POST",
+		},
+	);
+	if (!response.ok) {
+		throw new Error("Failed to start a new game");
+	}
+	const data = await response.json();
+	return data;
+};
