@@ -1,109 +1,26 @@
-import { useAuth } from "@clerk/clerk-react";
-import { useState } from "react";
-import { postPuzzle } from "../lib/api";
-import type {
-  createCellData,
-  createPuzzle,
-  EditScreenProps,
-  puzzleSizes,
-} from "../lib/interface";
+import { useEditLogic } from "../hooks/useEditLogic";
+import type { EditScreenProps, puzzleSizes } from "../lib/interface";
 
 const buttonClass =
   "bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300 disabled:opacity-50";
 
 const EditScreen = ({ onBack }: EditScreenProps) => {
   const sizes = [5, 10, 15, 20, 25];
-  const [puzzleSize, setPuzzleSize] = useState<puzzleSizes>(5);
-  const [paintColor, setPaintColor] = useState<string>("#000000");
-  const [currentCell, setCurrentCell] = useState<(string | null)[][]>(
-    Array.from({ length: puzzleSize }, () =>
-      Array<string | null>(puzzleSize).fill(null),
-    ),
-  );
-  const [title, setTitle] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isMouseDown, setIsMouseDown] = useState(false);
-  const { getToken } = useAuth();
-
-  const selectPuzzleSize = (size: puzzleSizes) => {
-    // サイズ選択時にcurrentCellがすべてnullでなければ、確認ダイアログを表示
-    if (currentCell.some((row) => row.some((cell) => cell !== null))) {
-      if (
-        !window.confirm("変更すると現在の編集内容が消えます。よろしいですか？")
-      ) {
-        return;
-      }
-    }
-    setPuzzleSize(size);
-    setCurrentCell(
-      Array.from({ length: size }, () => Array<string | null>(size).fill(null)),
-    );
-  };
-
-  const cellLeftClick = (rowIndex: number, colIndex: number) => {
-    const newCell = [...currentCell];
-    newCell[rowIndex][colIndex] = paintColor === "#ffffff" ? null : paintColor;
-    setCurrentCell(newCell);
-  };
-
-  const resetAllCells = () => {
-    // currentCellが全てnullでない場合は確認ダイアログを表示
-    if (
-      currentCell.some((row) => row.some((cell) => cell !== null)) &&
-      !window.confirm("全てがリセットされます。よろしいですか？")
-    ) {
-      return;
-    }
-    setCurrentCell(
-      Array.from({ length: puzzleSize }, () =>
-        Array<string | null>(puzzleSize).fill(null),
-      ),
-    );
-  };
-
-  const createPuzzleHandler = async () => {
-    // タイトルが入力されていない場合はアラートを表示
-    if (!title) {
-      alert("タイトルを入力してください");
-      return;
-    }
-    // currentCellがすべてnullの場合はアラートを表示
-    if (currentCell.every((row) => row.every((cell) => cell === null))) {
-      alert("何か描いてください");
-      return;
-    }
-    // createCellDataに合わせてパズルデータを作成
-    const puzzleData: createCellData[] = [];
-    currentCell.forEach((row, rowIndex) => {
-      row.forEach((cell, colIndex) => {
-        puzzleData.push({
-          row_index: rowIndex,
-          col_index: colIndex,
-          cell_value: cell ? 1 : 0,
-          color: cell || "#FFFFFF",
-        });
-      });
-    });
-    // パズルデータをfetchで送信
-    const puzzle: createPuzzle = {
-      name: title,
-      size: puzzleSize,
-      cells: puzzleData,
-    };
-
-    setIsLoading(true); // ローディング開始
-    try {
-      const token = await getToken();
-      await postPuzzle(puzzle, token || undefined);
-      alert("パズルを作成しました");
-      onBack();
-    } catch (_error) {
-      // console.error("パズル作成エラー:", error);
-      alert("パズルの作成に失敗しました。再度お試しください。");
-    } finally {
-      setIsLoading(false); // ローディング終了
-    }
-  };
+  const {
+    puzzleSize,
+    paintColor,
+    currentCell,
+    title,
+    isLoading,
+    isMouseDown,
+    selectPuzzleSize,
+    setPaintColor,
+    cellLeftClick,
+    resetAllCells,
+    createPuzzleHandler,
+    setTitle,
+    setIsMouseDown,
+  } = useEditLogic(onBack);
 
   return (
     <div className="container mx-auto p-4">
