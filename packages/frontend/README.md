@@ -1,5 +1,15 @@
 # React + TypeScript + Vite
 
+## 環境変数の設定
+
+Clerk を利用するため、 `.env` ファイルに下記を追加してください。
+
+```
+VITE_CLERK_PUBLISHABLE_KEY=<ClerkのPublishable Key>
+VITE_BACKEND_URL=<バックエンドのURL>
+```
+
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

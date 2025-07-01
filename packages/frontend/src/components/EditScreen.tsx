@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/clerk-react";
 import { useState } from "react";
 import { postPuzzle } from "../lib/api";
 import type {
@@ -23,6 +24,7 @@ const EditScreen = ({ onBack }: EditScreenProps) => {
   const [title, setTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const { getToken } = useAuth();
 
   const selectPuzzleSize = (size: puzzleSizes) => {
     // サイズ選択時にcurrentCellがすべてnullでなければ、確認ダイアログを表示
@@ -92,7 +94,8 @@ const EditScreen = ({ onBack }: EditScreenProps) => {
 
     setIsLoading(true); // ローディング開始
     try {
-      await postPuzzle(puzzle);
+      const token = await getToken();
+      await postPuzzle(puzzle, token || undefined);
       alert("パズルを作成しました");
       onBack();
     } catch (error) {

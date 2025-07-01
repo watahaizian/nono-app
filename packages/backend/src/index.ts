@@ -1,4 +1,4 @@
-import { clerkMiddleware, getAuth } from '@clerk/backend';
+import { createClerkClient } from '@clerk/backend';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
@@ -27,10 +27,15 @@ app.use('/api/*', cors({
   credentials: true,
 }));
 
-app.use('/api/*', clerkMiddleware());
+app.use('/api/*', (c, next) => {
+  // ① createClerkClientでクライアントを生成
+  const clerk = createClerkClient({ secretKey: c.env.CLERK_SECRET_KEY });
+  // ② クライアントからHono用ミドルウェアを生成して実行
+  return clerk.honoMiddleware()(c, next);
+});
 
 app.post('/api/puzzles', async (c) => {
-  const auth = getAuth(c);
+  const auth = c.get('auth');
 
   // 認証されていなかったら、401エラーを返す
   if (!auth?.userId) {
