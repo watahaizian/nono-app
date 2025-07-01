@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import type React from "react";
+import { useState } from "react";
+import EditScreen from "./components/EditScreen";
+import GameScreen from "./components/GameScreen";
+import TitleScreen from "./components/TitleScreen";
+import { fetchPuzzles } from "./lib/api";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App: React.FC = () => {
+  const [currentScreen, setCurrentScreen] = useState("title");
+  const [puzzleId, setPuzzleId] = useState(0);
+  const [puzzleSize, setPuzzleSize] = useState(0);
+
+  const startGame = async () => {
+    try {
+      const puzzles = await fetchPuzzles();
+      console.log(puzzles);
+      const randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+      setPuzzleId(randomPuzzle.puzzle_id);
+      setPuzzleSize(randomPuzzle.puzzle_size);
+      setCurrentScreen("game");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to start the game");
+    }
+  };
+
+  const startEdit = () => {
+    setCurrentScreen("edit");
+  };
+
+  // タイトルに戻る
+  const backToTitle = () => {
+    setCurrentScreen("title");
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {currentScreen === "title" && (
+        <TitleScreen onStart={startGame} onEdit={startEdit} />
+      )}
+      {currentScreen === "game" && (
+        <GameScreen
+          puzzleId={puzzleId}
+          puzzleSize={puzzleSize}
+          onBack={backToTitle}
+        />
+      )}
+      {currentScreen === "edit" && <EditScreen onBack={backToTitle} />}
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;

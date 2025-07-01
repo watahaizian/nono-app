@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RxCross2, RxPencil1 } from "react-icons/rx";
 import { fetchCells } from "../lib/api";
-import type { GameScreenProps, cellData, hintss } from "../lib/interface";
+import type { cellData, GameScreenProps, hintss } from "../lib/interface";
 import { calculateHints, getCellStyle } from "../lib/utils";
 
 const GameScreen: React.FC<GameScreenProps> = ({
@@ -223,9 +223,10 @@ const GameScreen: React.FC<GameScreenProps> = ({
 								className="flex"
 							>
 								{Array.from({ length: puzzleSize }).map((_, colIndex) => (
-									<div
+									<button
+										type="button"
 										key={`cell-${puzzleId}-${rowIndex}-${colIndex}-${currentCell[rowIndex][colIndex]}`}
-										className="flex items-center justify-center cursor-pointer border border-gray-300"
+										className="flex items-center justify-center cursor-pointer border border-gray-300 p-0"
 										style={{
 											...getCellStyle(rowIndex, colIndex),
 											backgroundColor:
@@ -252,9 +253,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
 											}
 										}}
 										onMouseUp={() => setIsMouseDown(false)}
+										tabIndex={0}
+										aria-label={`cell ${rowIndex + 1}, ${colIndex + 1}`}
 									>
 										{currentCell[rowIndex][colIndex] === "wrong" ? "x" : ""}
-									</div>
+									</button>
 								))}
 							</div>
 						))}
@@ -266,22 +269,20 @@ const GameScreen: React.FC<GameScreenProps> = ({
 			<div className="flex space-x-4 mt-4">
 				<button
 					type="button"
-					className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${
-						playType === "paint"
-							? "border-4 border-blue-500"
-							: "border border-gray-300"
-					}`}
+					className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${playType === "paint"
+						? "border-4 border-blue-500"
+						: "border border-gray-300"
+						}`}
 					onClick={() => setPlayType("paint")}
 				>
 					<RxPencil1 />
 				</button>
 				<button
 					type="button"
-					className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${
-						playType === "erase"
-							? "border-4 border-blue-500"
-							: "border border-gray-300"
-					}`}
+					className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${playType === "erase"
+						? "border-4 border-blue-500"
+						: "border border-gray-300"
+						}`}
 					onClick={() => setPlayType("erase")}
 				>
 					<RxCross2 />
