@@ -20,11 +20,6 @@ app.use(
         "http://localhost:5174",
       ];
 
-      // Cloudflare Pagesのプレビューデプロイも許可する（Pagesを使わないが念のため残す）
-      if (origin && origin.endsWith(".pages.dev")) {
-        return origin;
-      }
-
       if (origin && allowedOrigins.includes(origin)) {
         return origin;
       }
