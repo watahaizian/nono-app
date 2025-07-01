@@ -49,24 +49,8 @@ export const calculateHints = (data: cellData[], puzzleSize: number) => {
     }
     colHints.push(hints.length > 0 ? hints : [0]);
   }
-  console.log(rowHints);
-  console.log(colHints);
+  // console.log(rowHints);
+  // console.log(colHints);
 
   return { rowHints, colHints };
 };
-
-// export const getCellStyle = (row: number, col: number) => ({
-// 	borderTop: row === 0 ? "1px solid gray" : "none",
-// 	borderLeft: col === 0 ? "1px solid gray" : "none",
-// 	borderRight: "1px solid gray",
-// 	borderBottom: "1px solid gray",
-// });
-
-export const getCellStyle = (row: number, col: number) => ({
-  borderTop:
-    row === 0 ? "1px solid gray" : row % 5 === 0 ? "1px solid gray" : "none",
-  borderLeft:
-    col === 0 ? "1px solid gray" : col % 5 === 0 ? "1px solid gray" : "none",
-  borderRight: (col + 1) % 5 === 0 ? "1px solid gray" : "1px solid gray",
-  borderBottom: (row + 1) % 5 === 0 ? "1px solid gray" : "1px solid gray",
-});

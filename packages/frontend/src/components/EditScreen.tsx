@@ -7,7 +7,6 @@ import type {
   EditScreenProps,
   puzzleSizes,
 } from "../lib/interface";
-import { getCellStyle } from "../lib/utils";
 
 const buttonClass =
   "bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300 disabled:opacity-50";
@@ -98,8 +97,8 @@ const EditScreen = ({ onBack }: EditScreenProps) => {
       await postPuzzle(puzzle, token || undefined);
       alert("パズルを作成しました");
       onBack();
-    } catch (error) {
-      console.error("パズル作成エラー:", error);
+    } catch (_error) {
+      // console.error("パズル作成エラー:", error);
       alert("パズルの作成に失敗しました。再度お試しください。");
     } finally {
       setIsLoading(false); // ローディング終了
@@ -155,10 +154,29 @@ const EditScreen = ({ onBack }: EditScreenProps) => {
               key={`cell-${rowIndex}-${colIndex}-${cell ?? "empty"}`}
               className="flex items-center justify-center cursor-pointer border border-gray-300 p-0 m-0"
               style={{
-                ...getCellStyle(rowIndex, colIndex),
                 backgroundColor: cell || "#FFFFFF",
                 width: "100%",
                 height: "100%",
+                borderTop:
+                  rowIndex === 0
+                    ? "1px solid gray"
+                    : rowIndex % 5 === 0
+                      ? "1px solid gray"
+                      : "none",
+                borderLeft:
+                  colIndex === 0
+                    ? "1px solid gray"
+                    : colIndex % 5 === 0
+                      ? "1px solid gray"
+                      : "none",
+                borderRight:
+                  (colIndex + 1) % 5 === 0
+                    ? "1px solid gray"
+                    : "1px solid gray",
+                borderBottom:
+                  (rowIndex + 1) % 5 === 0
+                    ? "1px solid gray"
+                    : "1px solid gray",
               }}
               aria-label={`セル (${rowIndex + 1}, ${colIndex + 1})`}
               tabIndex={0}

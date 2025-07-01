@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { RxCross2, RxPencil1 } from "react-icons/rx";
 import { fetchCells } from "../lib/api";
 import type { cellData, GameScreenProps, hintss } from "../lib/interface";
-import { calculateHints, getCellStyle } from "../lib/utils";
+import { calculateHints } from "../lib/utils";
 
 const GameScreen: React.FC<GameScreenProps> = ({
   puzzleId,
@@ -23,6 +23,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [playType, setPlayType] = useState<"paint" | "erase">("paint");
   const [error, setError] = useState<string | null>(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const [cellSize, setCellSize] = useState(24); // Initial default cell size
 
   useEffect(() => {
     const fetchCellsData = async () => {
@@ -69,6 +70,46 @@ const GameScreen: React.FC<GameScreenProps> = ({
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, []);
+
+  // Calculate max hints and cell size after hints are loaded
+  const maxRowHints = hints
+    ? Math.max(...hints.rowHints.map((h) => h.length))
+    : 0;
+  const maxColHints = hints
+    ? Math.max(...hints.colHints.map((h) => h.length))
+    : 0;
+
+  useEffect(() => {
+    if (!hints) return; // Wait for hints to be calculated
+
+    const calculateAndSetCellSize = () => {
+      // Available space for the entire grid (including hints)
+      // Consider header/footer height, so use a percentage of viewport height
+      const availableWidth = window.innerWidth * 0.9; // 90% of viewport width
+      const availableHeight = window.innerHeight * 0.7; // 70% of viewport height
+
+      const totalGridCols = puzzleSize + maxRowHints;
+      const totalGridRows = puzzleSize + maxColHints;
+
+      const cellSizeFromWidth = availableWidth / totalGridCols;
+      const cellSizeFromHeight = availableHeight / totalGridRows;
+
+      // Choose the smaller dimension to ensure the entire grid fits
+      // Set a reasonable min/max for cell size for usability
+      const newSize = Math.max(
+        10,
+        Math.min(30, Math.min(cellSizeFromWidth, cellSizeFromHeight)),
+      );
+      setCellSize(newSize);
+    };
+
+    calculateAndSetCellSize(); // Initial calculation
+    window.addEventListener("resize", calculateAndSetCellSize); // Recalculate on resize
+
+    return () => {
+      window.removeEventListener("resize", calculateAndSetCellSize); // Cleanup
+    };
+  }, [hints, puzzleSize, maxRowHints, maxColHints]); // Dependencies for recalculation
 
   if (!hints) {
     return <div>Loading...</div>;
@@ -133,10 +174,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
     setPlayState("playing");
   };
 
-  // ヒントの最大数を取得
-  const maxRowHints = Math.max(...hints.rowHints.map((h) => h.length));
-  const maxColHints = Math.max(...hints.colHints.map((h) => h.length));
-
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100 overflow-auto">
       {error && <div className="text-red-500">{error}</div>}
@@ -145,96 +182,156 @@ const GameScreen: React.FC<GameScreenProps> = ({
       </h2>
       <div className="text-xl mb-4">残機: {life}</div>
 
-      {/* パズルエリア全体 */}
-      <div
-        className="relative"
-        style={{
-          width: `${(maxRowHints + puzzleSize) * 24}px`,
-          height: `${(maxColHints + puzzleSize) * 24}px`,
-          margin: "0 auto",
-          transform: `translateX(-${maxRowHints * 12}px)`,
-        }}
-      >
-        {/* 列ヒント（上部） */}
-        <div
-          className="absolute"
-          style={{
-            top: 0,
-            left: `${maxRowHints * 24}px`,
-            width: `${puzzleSize * 24}px`,
-            height: `${maxColHints * 24}px`,
-          }}
-        >
-          {hints.colHints.map((colHint, colIndex) => (
+      {/* Main puzzle area using CSS Grid */}
+      {playState === "playing" && (
+        <>
+          <div
+            className="grid border border-gray-400"
+            style={{
+              gridTemplateColumns: `repeat(${maxRowHints}, ${cellSize}px) repeat(${puzzleSize}, ${cellSize}px)`,
+              gridTemplateRows: `repeat(${maxColHints}, ${cellSize}px) repeat(${puzzleSize}, ${cellSize}px)`,
+            }}
+          >
+            {/* Top-left empty corner (filler for hints) */}
             <div
-              key={`column-hint-${puzzleId}-${colIndex}-${colHint.join("-")}`}
-              className="absolute flex flex-col items-center justify-end"
+              className="bg-gray-200"
               style={{
-                width: "24px",
-                height: "100%",
-                left: `${colIndex * 24}px`,
+                gridColumn: `span ${maxRowHints}`,
+                gridRow: `span ${maxColHints}`,
+              }}
+            ></div>
+
+            {/* Column Hints (top) */}
+            <div
+              className="grid"
+              style={{
+                gridColumn: `span ${puzzleSize}`,
+                gridRow: `span ${maxColHints}`,
+                gridTemplateColumns: `repeat(${puzzleSize}, ${cellSize}px)`,
+                gridTemplateRows: `repeat(${maxColHints}, ${cellSize}px)`,
               }}
             >
-              {colHint.map((hint, hintIndex) => (
+              {hints.colHints.map((colHint, colIndex) => (
                 <div
-                  key={`col-hint-${puzzleId}-${colIndex}-${hintIndex}-${hint}`}
-                  className="text-sm h-6 flex items-center"
+                  key={`column-hint-${puzzleId}-${colIndex}-${colHint.join(
+                    "-",
+                  )}`}
+                  className="flex flex-col items-center justify-end"
+                  style={{
+                    gridColumn: colIndex + 1,
+                    gridRow: `span ${maxColHints}`,
+                  }}
                 >
-                  {hint || ""}
+                  {Array.from({ length: maxColHints - colHint.length }).map(
+                    (_, i) => (
+                      <div
+                        key={`col-hint-filler-${colIndex}-${i}`}
+                        style={{ height: `${cellSize}px` }}
+                      ></div>
+                    ),
+                  )}
+                  {colHint.map((hint, hintIndex) => (
+                    <div
+                      key={`col-hint-${puzzleId}-${colIndex}-${hintIndex}-${hint}`}
+                      className="text-sm flex items-center justify-center"
+                      style={{
+                        width: `${cellSize}px`,
+                        height: `${cellSize}px`,
+                      }}
+                    >
+                      {hint || ""}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ))}
-        </div>
 
-        {/* 行ヒント（左側）とパズルグリッド */}
-        <div
-          className="absolute"
-          style={{
-            top: `${maxColHints * 24}px`,
-            left: 0,
-            display: "flex",
-          }}
-        >
-          {/* 行ヒント */}
-          <div style={{ width: `${maxRowHints * 24}px` }}>
-            {hints.rowHints.map((rowHint, rowIndex) => (
-              <div
-                key={`row-hint-${puzzleId}-${rowIndex}-${rowHint.join("-")}`}
-                className="flex justify-end items-center h-6"
-              >
-                {rowHint.map((hint, hintIndex) => (
-                  <div
-                    key={`row-hint-${puzzleId}-${rowIndex}-${hintIndex}-${hint}`}
-                    className="text-sm w-6 text-center"
-                  >
-                    {hint || ""}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+            {/* Row Hints (left) */}
+            <div
+              className="grid"
+              style={{
+                gridColumn: `span ${maxRowHints}`,
+                gridRow: `span ${puzzleSize}`,
+                gridTemplateColumns: `repeat(${maxRowHints}, ${cellSize}px)`,
+                gridTemplateRows: `repeat(${puzzleSize}, ${cellSize}px)`,
+              }}
+            >
+              {hints.rowHints.map((rowHint, rowIndex) => (
+                <div
+                  key={`row-hint-${puzzleId}-${rowIndex}-${rowHint.join("-")}`}
+                  className="flex justify-end items-center"
+                  style={{
+                    gridRow: rowIndex + 1,
+                    gridColumn: `span ${maxRowHints}`,
+                  }}
+                >
+                  {Array.from({ length: maxRowHints - rowHint.length }).map(
+                    (_, i) => (
+                      <div
+                        key={`row-hint-filler-${rowIndex}-${i}`}
+                        style={{ width: `${cellSize}px` }}
+                      ></div>
+                    ),
+                  )}
+                  {rowHint.map((hint, hintIndex) => (
+                    <div
+                      key={`row-hint-${puzzleId}-${rowIndex}-${hintIndex}-${hint}`}
+                      className="text-sm flex items-center justify-center"
+                      style={{
+                        width: `${cellSize}px`,
+                        height: `${cellSize}px`,
+                      }}
+                    >
+                      {hint || ""}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
 
-          {/* パズルグリッド */}
-          <div className="flex flex-col">
-            {Array.from({ length: puzzleSize }).map((_, rowIndex) => (
-              <div
-                key={`row-${puzzleId}-${rowIndex}-${currentCell[rowIndex].join("-")}`}
-                className="flex"
-              >
-                {Array.from({ length: puzzleSize }).map((_, colIndex) => (
+            {/* Puzzle Grid */}
+            <div
+              className="grid"
+              style={{
+                gridColumn: `span ${puzzleSize}`,
+                gridRow: `span ${puzzleSize}`,
+                gridTemplateColumns: `repeat(${puzzleSize}, ${cellSize}px)`,
+                gridTemplateRows: `repeat(${puzzleSize}, ${cellSize}px)`,
+              }}
+            >
+              {Array.from({ length: puzzleSize }).map((_, rowIndex) =>
+                Array.from({ length: puzzleSize }).map((__, colIndex) => (
                   <button
                     type="button"
                     key={`cell-${puzzleId}-${rowIndex}-${colIndex}-${currentCell[rowIndex][colIndex]}`}
                     className="flex items-center justify-center cursor-pointer border border-gray-300 p-0"
                     style={{
-                      ...getCellStyle(rowIndex, colIndex),
                       backgroundColor:
                         currentCell[rowIndex][colIndex] === null
                           ? "white"
                           : currentCell[rowIndex][colIndex],
-                      width: "24px",
-                      height: "24px",
+                      width: `${cellSize}px`,
+                      height: `${cellSize}px`,
+                      borderTop:
+                        rowIndex === 0
+                          ? "1px solid gray"
+                          : rowIndex % 5 === 0
+                            ? "1px solid gray"
+                            : "none",
+                      borderLeft:
+                        colIndex === 0
+                          ? "1px solid gray"
+                          : colIndex % 5 === 0
+                            ? "1px solid gray"
+                            : "none",
+                      borderRight:
+                        (colIndex + 1) % 5 === 0
+                          ? "1px solid gray"
+                          : "1px solid gray",
+                      borderBottom:
+                        (rowIndex + 1) % 5 === 0
+                          ? "1px solid gray"
+                          : "1px solid gray",
                     }}
                     onClick={() => cellLeftClick(rowIndex, colIndex)}
                     onKeyDown={(e) => {
@@ -258,38 +355,36 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   >
                     {currentCell[rowIndex][colIndex] === "wrong" ? "x" : ""}
                   </button>
-                ))}
-              </div>
-            ))}
+                )),
+              )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* ボタンの配置 */}
-      <div className="flex space-x-4 mt-4">
-        <button
-          type="button"
-          className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${
-            playType === "paint"
-              ? "border-4 border-blue-500"
-              : "border border-gray-300"
-          }`}
-          onClick={() => setPlayType("paint")}
-        >
-          <RxPencil1 />
-        </button>
-        <button
-          type="button"
-          className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${
-            playType === "erase"
-              ? "border-4 border-blue-500"
-              : "border border-gray-300"
-          }`}
-          onClick={() => setPlayType("erase")}
-        >
-          <RxCross2 />
-        </button>
-      </div>
+          {/* ... existing buttons and messages ... */}
+          <div className="flex space-x-4 mt-4">
+            <button
+              type="button"
+              className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${playType === "paint"
+                ? "border-4 border-blue-500"
+                : "border border-gray-300"
+                }`}
+              onClick={() => setPlayType("paint")}
+            >
+              <RxPencil1 />
+            </button>
+            <button
+              type="button"
+              className={`flex items-center justify-center bg-white text-black font-semibold w-12 h-12 rounded-lg shadow-lg transition duration-300 ${playType === "erase"
+                ? "border-4 border-blue-500"
+                : "border border-gray-300"
+                }`}
+              onClick={() => setPlayType("erase")}
+            >
+              <RxCross2 />
+            </button>
+          </div>
+        </>
+      )}
       {playState === "correct" && (
         <div className="text-2xl mt-4 text-green-500">ゲームクリア！</div>
       )}

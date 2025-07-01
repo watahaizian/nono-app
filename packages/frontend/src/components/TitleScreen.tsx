@@ -1,4 +1,4 @@
-import { useClerk, useUser, UserButton } from "@clerk/clerk-react";
+import { UserButton, useClerk, useUser } from "@clerk/clerk-react";
 import type React from "react";
 import { version } from "../../package.json";
 import type { TitleScreenProps } from "../lib/interface";
